@@ -17,7 +17,7 @@ bool IsOtaRequested(void)
 	return header->otaRequest == (uint32_t)OTA_REQUESTED;
 }
 
-static bool otaWrite(uint32_t const value)
+static bool OtaWriteRequestStatus(uint32_t const value)
 {
 	AppHeader_t *const header = (AppHeader_t *)headerPage;
 
@@ -50,10 +50,10 @@ static bool otaWrite(uint32_t const value)
 
 bool OtaRequestSet(void)
 {
-	return otaWrite((uint32_t)OTA_REQUESTED);
+	return OtaWriteRequestStatus((uint32_t)OTA_REQUESTED);
 }
 
 bool OtaRequestClear(void)
 {
-	return otaWrite((uint32_t)OTA_NOT_REQUESTED);
+	return OtaWriteRequestStatus((uint32_t)OTA_NOT_REQUESTED);
 }

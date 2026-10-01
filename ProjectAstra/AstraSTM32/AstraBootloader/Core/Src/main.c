@@ -26,6 +26,9 @@
 #include "stm32g4xx_hal_gpio.h"
 #include "bootloaderJump.h"
 #include "OtaRequest.h"
+#include "OtaStream.h"
+#include "OtaStreamNordic.h"
+#include "OtaEngine.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,8 +110,18 @@ int main(void)
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
   ApplicationStatus_t status = IsApplicationValid();
+  if (IsOtaRequested()) 
+  {
+    OtaStream_t stream;
+    NordicCtx_t ctx = {};
+    OtaStreamNordicInit(&stream, &ctx, &huart1);
 
-  if ((status != APPLICATION_VALID) || IsOtaRequested())
+    if (OtaEngineRun(&stream, APP_START_ADDR) == 0)
+    {
+      return 1;
+    }
+  }
+  if ((status != APPLICATION_VALID) )
   {
     while (1)
     {
