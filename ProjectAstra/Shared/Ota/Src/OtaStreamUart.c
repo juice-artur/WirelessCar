@@ -1,10 +1,10 @@
-#include "OtaStreamNordic.h"
+#include "OtaStreamUart.h"
 #include "OtaStream.h"
 #include "UARTCommands.h"
 
-static int NordicReadImpl(OtaStream_t *self, uint8_t *buffer, uint32_t len, uint32_t timeoutMs) 
+static int UartReadImpl(OtaStream_t *self, uint8_t *buffer, uint32_t len, uint32_t timeoutMs) 
 {
-    NordicCtx_t *ctx = (NordicCtx_t*)self->userData;
+    UartCtx_t *ctx = (UartCtx_t*)self->userData;
 
     if (!ctx->isStarted) {
         uint8_t cmd = CMD_STM32_READY;
@@ -12,7 +12,7 @@ static int NordicReadImpl(OtaStream_t *self, uint8_t *buffer, uint32_t len, uint
         {
             return -1;
         }
-
+        ctx->isStarted = 1;
     }
     if (HAL_UART_Receive(ctx->huart, buffer, len, timeoutMs) == HAL_OK) 
     {
@@ -25,7 +25,7 @@ static int NordicReadImpl(OtaStream_t *self, uint8_t *buffer, uint32_t len, uint
     return -1;
 }
 
-void OtaStreamNordicInit(OtaStream_t *stream, NordicCtx_t *ctx, UART_HandleTypeDef *huart)
+void OtaStreamUartInit(OtaStream_t *stream, UartCtx_t *ctx, UART_HandleTypeDef *huart)
 {
     if (!stream || !ctx || !huart) 
     {
@@ -35,6 +35,6 @@ void OtaStreamNordicInit(OtaStream_t *stream, NordicCtx_t *ctx, UART_HandleTypeD
     ctx->huart = huart;
     ctx->isStarted = 0;
 
-    stream->read = NordicReadImpl;
+    stream->read = UartReadImpl;
     stream->userData = (void*)ctx;
 }

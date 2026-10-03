@@ -27,7 +27,7 @@
 #include "bootloaderJump.h"
 #include "OtaRequest.h"
 #include "OtaStream.h"
-#include "OtaStreamNordic.h"
+#include "OtaStreamUart.h"
 #include "OtaEngine.h"
 /* USER CODE END Includes */
 
@@ -113,8 +113,8 @@ int main(void)
   if (IsOtaRequested()) 
   {
     OtaStream_t stream;
-    NordicCtx_t ctx = {};
-    OtaStreamNordicInit(&stream, &ctx, &huart1);
+    UartCtx_t ctx = {};
+    OtaStreamUartInit(&stream, &ctx, &huart1);
 
     if (OtaEngineRun(&stream, APP_START_ADDR) == 0)
     {

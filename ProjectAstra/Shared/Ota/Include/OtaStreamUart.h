@@ -6,6 +6,6 @@
 typedef struct {
     UART_HandleTypeDef *huart;
     uint8_t isStarted;
-} NordicCtx_t;
+} UartCtx_t;
 
-void OtaStreamNordicInit(OtaStream_t *stream, NordicCtx_t *ctx, UART_HandleTypeDef *huart);
+void OtaStreamUartInit(OtaStream_t *stream, UartCtx_t *ctx, UART_HandleTypeDef *huart);
