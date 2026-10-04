@@ -27,8 +27,9 @@
 #include "bootloaderJump.h"
 #include "OtaRequest.h"
 #include "OtaStream.h"
-#include "OtaStreamUart.h"
 #include "OtaEngine.h"
+#include "OtaStreamUart.h"
+#include "BootloaderStateMachine.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +51,8 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+
+static UartCtx_t otaCtx;
 
 /* USER CODE END PV */
 
@@ -98,6 +101,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_NVIC_SetPriority(USART1_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,15 +115,23 @@ int main(void)
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
   ApplicationStatus_t status = IsApplicationValid();
+  BootloaderSMInit();
+
   if (IsOtaRequested()) 
   {
     OtaStream_t stream;
-    UartCtx_t ctx = {};
-    OtaStreamUartInit(&stream, &ctx, &huart1);
+    uint32_t firmwareSize = 0U;
 
-    if (OtaEngineRun(&stream, APP_START_ADDR) == 0)
+    OtaStreamUartInit(&stream, &otaCtx, &huart1);
+    OtaStreamUartAnnounce(&otaCtx);
+
+    BootloaderSMDispatch(EVENT_CONN_ESTABLISHED, NULL);
+
+    if (OtaEngineRun(&stream, APP_START_ADDR, &firmwareSize) == 0)
     {
-      return 1;
+      OtaStreamUartSendAck(&otaCtx);
+      BootloaderSMDispatch(EVENT_SIZE_RECEIVED, &firmwareSize);
+      OtaRequestClear();
     }
   }
   if ((status != APPLICATION_VALID) )

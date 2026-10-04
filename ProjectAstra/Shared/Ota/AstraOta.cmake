@@ -19,17 +19,22 @@ endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/../AstraConstants/AstraConstants.cmake")
 
-add_library(${LIBRARY_NAME} STATIC 
-                            "${CMAKE_CURRENT_LIST_DIR}/Src/OtaRequest.c"
-                            "${CMAKE_CURRENT_LIST_DIR}/Src/OtaEngine.c"
-                            "${CMAKE_CURRENT_LIST_DIR}/Src/OtaStreamUart.c"
+set(ASTRA_OTA_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/Src/OtaRequest.c"
+    "${CMAKE_CURRENT_LIST_DIR}/Src/OtaEngine.c"
 )
+
+if(ASTRA_OTA_ENABLE_UART)
+    list(APPEND ASTRA_OTA_SOURCES
+         "${CMAKE_CURRENT_LIST_DIR}/Src/OtaStreamUart.c")
+endif()
+
+add_library(${LIBRARY_NAME} STATIC ${ASTRA_OTA_SOURCES})
 
 target_sources(${LIBRARY_NAME} PRIVATE 
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaRequest.h"
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaStream.h"
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaEngine.h"
-                                "${CMAKE_CURRENT_LIST_DIR}/Include/OtaStreamUart.h"
 )
 
 # FlashLayout.h and AppHeader.h are implementation details of OtaRequest.c, so

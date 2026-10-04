@@ -47,6 +47,8 @@ astra_configure_flash_layout(
 )
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/AstraFlash/AstraFlash.cmake")
+
+set(ASTRA_OTA_ENABLE_UART ON)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/Ota/AstraOta.cmake")
 
 # Add STM32CubeMX generated sources
