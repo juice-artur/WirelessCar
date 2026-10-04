@@ -1,7 +1,9 @@
 #include "OtaEngine.h"
 #include "AppHeader.h"
+#include "FlashLayout.h"
 
-int OtaEngineRun(OtaStream_t *stream, uint32_t appFlashStartAddr)
+int OtaEngineRun(OtaStream_t *stream, uint32_t appFlashStartAddr,
+                  uint32_t *firmwareSize)
 {
     if(!stream || !stream->read)
     {
@@ -17,6 +19,16 @@ int OtaEngineRun(OtaStream_t *stream, uint32_t appFlashStartAddr)
     if (header.magic != ASTRA_MAGIC_VALUE) 
     {
         return -3; 
+    }
+
+    if (header.size == 0U || header.size > APP_MAX_CODE_SIZE)
+    {
+        return -4;
+    }
+
+    if (firmwareSize != NULL)
+    {
+        *firmwareSize = header.size;
     }
 
     return 0;

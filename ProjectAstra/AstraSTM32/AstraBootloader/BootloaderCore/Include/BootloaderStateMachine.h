@@ -31,5 +31,5 @@ typedef enum BootloaderEvent{
 
 void BootloaderSMDispatch(BootloaderEvent_t event, void *eventData);
 
-void BootloaderSMInit(BootloaderEvent_t event, void *eventData);
+void BootloaderSMInit();
 

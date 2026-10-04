@@ -1,8 +1,8 @@
 #include "BootloaderStateMachine.h"
+#include <stdint.h>
 
-
-typedef struct BootloaderSM{
-    BootloaderState currentState;
+typedef struct BootloaderSM {
+    BootloaderState_t currentState;
     uint32_t fwSize;
     uint32_t bytesReceived;
 } BootloaderSM_t;
@@ -81,7 +81,7 @@ void BootloaderSMDispatch(BootloaderEvent_t event, void *eventData)
 }
 
 
-void BootloaderSMInit(BootloaderEvent_t event, void *eventData)
+void BootloaderSMInit()
 {
     instance.currentState = IDLE;
     instance.fwSize = 0;

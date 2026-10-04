@@ -1,0 +1,52 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "J-Link: Application (Debug)",
+            "type": "jlinkgdbtarget",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+            "runEntry": "main",
+            "deviceName": "STM32G431CB",
+            "deviceCore": "Cortex-M4",
+            "serverDevice": "STM32G431CB",
+            "serverInterface": "SWD",
+            "serverSpeed": "4000",
+            "serverPort": "2331",
+            "serverVerify": true,
+            "serverReset": "Type 0: normal",
+            "serverRtos": { "enabled": false },
+            "imagesAndSymbols": [
+                {
+                    "imageFileName": "${workspaceFolder}/build/Debug/AstraApplication.packed.elf",
+                    "symbolFileName": "${workspaceFolder}/build/Debug/AstraApplication.elf"
+                }
+            ]
+        },
+        {
+            "name": "ST-LINK: Application (Debug)",
+            "type": "stlinkgdbtarget",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+            "runEntry": "main",
+            "deviceName": "STM32G431CB",
+            "deviceCore": "Cortex-M4",
+            "serverInterface": "SWD",
+            "serverInterfaceFrequency": "Auto",
+            "serverPort": "61234",
+            "serverVerify": true,
+            "serverReset": "Software system reset",
+            "serverRtos": { "enabled": false },
+            "serverSemihosting": { "enabled": false },
+            "serverVerify": false,
+            "imagesAndSymbols": [
+                {
+                    "imageFileName": "${workspaceFolder}/build/Debug/AstraApplication.packed.elf",
+                    "symbolFileName": "${workspaceFolder}/build/Debug/AstraApplication.elf"
+                }
+            ]
+        }
+    ]
+}

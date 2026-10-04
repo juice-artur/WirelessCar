@@ -257,7 +257,7 @@ def main(argv=None):
     parser.add_argument("--image-start", required=True, type=lambda v: int(v, 0),
                         help="address of the first code byte, just after the header")
     parser.add_argument("--version", required=True, type=int, help="application version")
-    parser.add_argument("--max-code-size", type=lambda v: int(v, 0), default=0x1A800,
+    parser.add_argument("--max-code-size", type=lambda v: int(v, 0), default=0x19800,
                         help="maximum application code size in bytes")
     arguments = parser.parse_args(argv)
 
