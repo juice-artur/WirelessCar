@@ -10,7 +10,7 @@
 
 ApplicationStatus_t IsApplicationValid(void)
 {
-	AppHeader_t const* const header = (AppHeader_t const *)APP_HEADER_ADDR;
+	AppHeader_t const *const header = (AppHeader_t const *)APP_HEADER_ADDR;
 
 	if (header->magic != ASTRA_MAGIC_VALUE)
 	{

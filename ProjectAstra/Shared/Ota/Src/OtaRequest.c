@@ -3,18 +3,29 @@
 #include <stdint.h>
 
 #include "stm32g4xx.h"
-#include "AppHeader.h"
 #include "AstraFlash.h"
 #include "FlashLayout.h"
 
 static uint32_t headerPage[PAGE_SIZE_WORDS];
 
-bool IsOtaRequested(void)
+static bool OtaWriteHeaderPage(void)
 {
-	AppHeader_t const *const header =
-		(AppHeader_t const *)APP_HEADER_ADDR;
+	uint32_t const primask = __get_PRIMASK();
 
-	return header->otaRequest == (uint32_t)OTA_REQUESTED;
+	__disable_irq();
+
+	HAL_StatusTypeDef const status =
+	 (FlashErasePage(APP_HEADER_ADDR) == HAL_OK &&
+		 FlashWritePage(APP_HEADER_ADDR, headerPage) == HAL_OK)
+	  ? HAL_OK
+	  : HAL_ERROR;
+
+	if (primask == 0U)
+	{
+		__enable_irq();
+	}
+
+	return status == HAL_OK;
 }
 
 static bool OtaWriteRequestStatus(uint32_t const value)
@@ -30,22 +41,14 @@ static bool OtaWriteRequestStatus(uint32_t const value)
 
 	header->otaRequest = value;
 
-	uint32_t const primask = __get_PRIMASK();
+	return OtaWriteHeaderPage();
+}
 
-	__disable_irq();
+bool IsOtaRequested(void)
+{
+	AppHeader_t const *const header = (AppHeader_t const *)APP_HEADER_ADDR;
 
-	HAL_StatusTypeDef const status =
-		(FlashErasePage(APP_HEADER_ADDR) == HAL_OK &&
-		 FlashWritePage(APP_HEADER_ADDR, headerPage) == HAL_OK)
-			? HAL_OK
-			: HAL_ERROR;
-
-	if (primask == 0U)
-	{
-		__enable_irq();
-	}
-
-	return status == HAL_OK;
+	return header->otaRequest == (uint32_t)OTA_REQUESTED;
 }
 
 bool OtaRequestSet(void)
@@ -53,7 +56,18 @@ bool OtaRequestSet(void)
 	return OtaWriteRequestStatus((uint32_t)OTA_REQUESTED);
 }
 
-bool OtaRequestClear(void)
+bool OtaRequestCommitHeader(const AppHeader_t *header)
 {
-	return OtaWriteRequestStatus((uint32_t)OTA_NOT_REQUESTED);
+	if (header == NULL)
+	{
+		return false;
+	}
+
+	FlashReadPage(APP_HEADER_ADDR, headerPage);
+
+	*((AppHeader_t *)headerPage) = *header;
+
+	((AppHeader_t *)headerPage)->otaRequest = (uint32_t)OTA_NOT_REQUESTED;
+
+	return OtaWriteHeaderPage();
 }

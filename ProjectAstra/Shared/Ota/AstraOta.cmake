@@ -17,6 +17,10 @@ if(NOT TARGET AstraFlash)
     include("${CMAKE_CURRENT_LIST_DIR}/../AstraFlash/AstraFlash.cmake")
 endif()
 
+if(NOT TARGET AstraCrc32)
+    include("${CMAKE_CURRENT_LIST_DIR}/../Crc/AstraCrc32.cmake")
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/../AstraConstants/AstraConstants.cmake")
 
 set(ASTRA_OTA_SOURCES
@@ -31,11 +35,16 @@ endif()
 
 add_library(${LIBRARY_NAME} STATIC ${ASTRA_OTA_SOURCES})
 
-target_sources(${LIBRARY_NAME} PRIVATE 
+target_sources(${LIBRARY_NAME} PRIVATE
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaRequest.h"
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaStream.h"
                                 "${CMAKE_CURRENT_LIST_DIR}/Include/OtaEngine.h"
 )
+
+if(ASTRA_OTA_ENABLE_UART)
+    target_sources(${LIBRARY_NAME} PRIVATE
+                                "${CMAKE_CURRENT_LIST_DIR}/Include/OtaStreamUart.h")
+endif()
 
 # FlashLayout.h and AppHeader.h are implementation details of OtaRequest.c, so
 # they stay private and are never exposed to the consumers of OtaRequest.h.
@@ -47,5 +56,6 @@ target_include_directories(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
     PRIVATE AstraFlash
     PRIVATE AstraImage
+    PRIVATE AstraCrc32
     PRIVATE AstraConstants
 )
