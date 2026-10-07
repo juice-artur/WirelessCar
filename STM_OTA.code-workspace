@@ -37,6 +37,54 @@
         "version": "2.0.0",
         "tasks": [
             {
+                "label": "AstraBootloader: build (Debug)",
+                "type": "shell",
+                "command": "cmake --build build/Debug",
+                "options": {
+                    "cwd": "${workspaceFolder:AstraBootloader}",
+                    "env": {
+                        "PATH": "${env:LOCALAPPDATA}\\stm32cube\\bundles\\gnu-tools-for-stm32\\14.3.1+st.2\\bin;${env:PATH}"
+                    }
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "AstraBootloader: build (Release)",
+                "type": "shell",
+                "command": "cmake --build build/Release",
+                "options": {
+                    "cwd": "${workspaceFolder:AstraBootloader}",
+                    "env": {
+                        "PATH": "${env:LOCALAPPDATA}\\stm32cube\\bundles\\gnu-tools-for-stm32\\14.3.1+st.2\\bin;${env:PATH}"
+                    }
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "AstraApplication: build (Debug)",
+                "type": "shell",
+                "command": "cmake --build build/Debug",
+                "options": {
+                    "cwd": "${workspaceFolder:AstraApplication}",
+                    "env": {
+                        "PATH": "${env:LOCALAPPDATA}\\stm32cube\\bundles\\gnu-tools-for-stm32\\14.3.1+st.2\\bin;${env:PATH}"
+                    }
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "AstraApplication: build (Release)",
+                "type": "shell",
+                "command": "cmake --build build/Release",
+                "options": {
+                    "cwd": "${workspaceFolder:AstraApplication}",
+                    "env": {
+                        "PATH": "${env:LOCALAPPDATA}\\stm32cube\\bundles\\gnu-tools-for-stm32\\14.3.1+st.2\\bin;${env:PATH}"
+                    }
+                },
+                "problemMatcher": []
+            },
+            {
                 "label": "Build: both projects (Debug)",
                 "dependsOrder": "sequence",
                 "dependsOn": [
@@ -73,6 +121,65 @@
                     "AstraApplication: flash (Release)"
                 ],
                 "problemMatcher": []
+            }
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "J-Link: Bootloader + Application (Debug)",
+                "type": "jlinkgdbtarget",
+                "request": "launch",
+                "cwd": "${workspaceFolder:AstraBootloader}",
+                "preLaunchTask": "Build: both projects (Debug)",
+                "runEntry": "BootloaderSMInit",
+                "deviceName": "STM32G431CB",
+                "deviceCore": "Cortex-M4",
+                "serverDevice": "STM32G431CB",
+                "serverInterface": "SWD",
+                "serverSpeed": "4000",
+                "serverPort": "2331",
+                "serverVerify": true,
+                "serverReset": "Type 0: normal",
+                "serverRtos": { "enabled": false },
+                "imagesAndSymbols": [
+                    {
+                        "imageFileName": "${workspaceFolder:AstraApplication}/build/Debug/AstraApplication.packed.elf",
+                        "symbolFileName": "${workspaceFolder:AstraApplication}/build/Debug/AstraApplication.elf"
+                    },
+                    {
+                        "imageFileName": "${workspaceFolder:AstraBootloader}/build/Debug/AstraBootloader.elf",
+                        "symbolFileName": "${workspaceFolder:AstraBootloader}/build/Debug/AstraBootloader.elf"
+                    }
+                ]
+            },
+            {
+                "name": "ST-LINK: Bootloader + Application (Debug)",
+                "type": "stlinkgdbtarget",
+                "request": "launch",
+                "cwd": "${workspaceFolder:AstraBootloader}",
+                "preLaunchTask": "Build: both projects (Debug)",
+                "runEntry": "BootloaderSMInit",
+                "deviceName": "STM32G431CB",
+                "deviceCore": "Cortex-M4",
+                "serverInterface": "SWD",
+                "serverInterfaceFrequency": "Auto",
+                "serverPort": "61234",
+                "serverVerify": true,
+                "serverReset": "Connect under reset",
+                "serverRtos": { "enabled": false },
+                "serverSemihosting": { "enabled": false },
+                "imagesAndSymbols": [
+                    {
+                        "imageFileName": "${workspaceFolder:AstraApplication}/build/Debug/AstraApplication.packed.elf",
+                        "symbolFileName": "${workspaceFolder:AstraApplication}/build/Debug/AstraApplication.elf"
+                    },
+                    {
+                        "imageFileName": "${workspaceFolder:AstraBootloader}/build/Debug/AstraBootloader.elf",
+                        "symbolFileName": "${workspaceFolder:AstraBootloader}/build/Debug/AstraBootloader.elf"
+                    }
+                ]
             }
         ]
     }
