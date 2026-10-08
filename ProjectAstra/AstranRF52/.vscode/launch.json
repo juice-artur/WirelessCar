@@ -1,0 +1,79 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // F5: build -> flash through the ST-Link clone -> start a debug
+            // session. RTT logs (CONFIG_LOG_BACKEND_RTT, channel 0) are shown
+            // in the "RTT Log" view.
+            "name": "ST-Link: build + flash + debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "servertype": "openocd",
+            "serverpath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            // Absolute path: does not depend on the cwd of the debug adapter.
+            "configFiles": [
+                "${workspaceFolder}/openocd/stlink_nrf52840.cfg"
+            ],
+            "executable": "${workspaceFolder}/build/AstranRF52/zephyr/zephyr.elf",
+            "gdbPath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb.exe",
+            "device": "nRF52840",
+            "svdFile": "C:\\ncs\\v3.4.1\\modules\\hal\\nordic\\nrfx\\bsp\\stable\\mdk\\nrf52840.svd",
+            "runToEntryPoint": "main",
+            "preLaunchTask": "flash",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "searchId": "SEGGER RTT",
+                "searchSize": 256,
+                // Do NOT wipe the control block ID before the OpenOCD search:
+                // cortex-debug's clearSearch zeroes the "SEGGER RTT" signature
+                // that OpenOCD looks for, which breaks RTT with this server.
+                "clearSearch": false,
+                "polling_interval": 100,
+                "rtt_start_retry": 2000,
+                "decoders": [
+                    {
+                        "type": "console",
+                        "port": 0,
+                        "label": "RTT Log"
+                    }
+                ]
+            }
+        },
+        {
+            // Debug without reprogramming: the firmware is already on the chip
+            // and matches zephyr.elf. Use after the first flash for quick restarts.
+            "name": "ST-Link: debug (no flash)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "servertype": "openocd",
+            "serverpath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            "configFiles": [
+                "${workspaceFolder}/openocd/stlink_nrf52840.cfg"
+            ],
+            "executable": "${workspaceFolder}/build/AstranRF52/zephyr/zephyr.elf",
+            "gdbPath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb.exe",
+            "device": "nRF52840",
+            "svdFile": "C:\\ncs\\v3.4.1\\modules\\hal\\nordic\\nrfx\\bsp\\stable\\mdk\\nrf52840.svd",
+            "runToEntryPoint": "main",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "searchId": "SEGGER RTT",
+                "searchSize": 256,
+                "clearSearch": false,
+                "polling_interval": 100,
+                "rtt_start_retry": 2000,
+                "decoders": [
+                    {
+                        "type": "console",
+                        "port": 0,
+                        "label": "RTT Log"
+                    }
+                ]
+            }
+        }
+    ]
+}

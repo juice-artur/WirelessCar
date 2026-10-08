@@ -1,0 +1,40 @@
+/*
+ * Route the NUS UART (chosen nordic,nus-uart, used by src/main.c) to the
+ * hardware UARTE0 instead of the USB CDC ACM console:
+ *   UART_TX = P0.6, UART_RX = P0.8
+ *
+ * Without this chosen, main.c falls back to zephyr,shell-uart, which on this
+ * board is the virtual CDC ACM device - it has no async UART API, so
+ * uart_callback_set() fails with -ENOSYS.
+ */
+
+#include <zephyr/dt-bindings/pinctrl/nrf-pinctrl.h>
+
+/ {
+	chosen {
+		nordic,nus-uart = &uart0;
+	};
+};
+
+&pinctrl {
+	uart0_nus_default: uart0_nus_default {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 6)>,
+				<NRF_PSEL(UART_RX, 0, 8)>;
+		};
+	};
+
+	uart0_nus_sleep: uart0_nus_sleep {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 6)>,
+				<NRF_PSEL(UART_RX, 0, 8)>;
+			low-power-enable;
+		};
+	};
+};
+
+&uart0 {
+	pinctrl-0 = <&uart0_nus_default>;
+	pinctrl-1 = <&uart0_nus_sleep>;
+	pinctrl-names = "default", "sleep";
+};

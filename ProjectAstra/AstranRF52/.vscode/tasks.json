@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // west build for the ProMicro nRF52840 board (same arguments as the
+            // nRF Connect VS Code extension uses). Requires ZEPHYR_BASE etc.,
+            // which are set below. NOTE: the NCS paths are hardcoded - update
+            // them in this file after upgrading NCS.
+            "label": "build",
+            "type": "process",
+            "command": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\bin\\python.exe",
+            "args": [
+                "-m", "west", "build",
+                "--build-dir", "${workspaceFolder}/build",
+                "${workspaceFolder}",
+                "--board", "promicro_nrf52840/nrf52840",
+                "--",
+                "-DCONFIG_DEBUG_THREAD_INFO=y",
+                "-DCONF_FILE=prj.conf"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "ZEPHYR_BASE": "C:\\ncs\\v3.4.1\\zephyr",
+                    "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
+                    "ZEPHYR_SDK_INSTALL_DIR": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\zephyr-sdk",
+                    // opt\\bin holds west (python -m west) and ccache, which the
+                    // enabled build cache needs; neither is on PATH by default.
+                    "PATH": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\bin;${env:PATH}"
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "west build (Zephyr/NCS), board promicro_nrf52840/nrf52840"
+        },
+        {
+            // Build first, then write the merged hex over the cheap ST-Link V2
+            // clone via OpenOCD (openocd/stlink_nrf52840.cfg).
+            "label": "flash",
+            "type": "process",
+            "command": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            "args": [
+                "-f", "${workspaceFolder}/openocd/stlink_nrf52840.cfg",
+                "-c", "program {${workspaceFolder}/build/merged_promicro_nrf52840_nrf52840.hex} verify reset exit"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "build",
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
+            "group": "build",
+            "detail": "build + flash the merged hex through the ST-Link clone"
+        },
+        {
+            // Mass erase + unlock via the nRF CTRL-AP. Use it when the chip is
+            // readout/APPROTECT-locked or the flash is in a bad state.
+            // DANGER: erases everything on the chip.
+            "label": "recover (mass erase)",
+            "type": "process",
+            "command": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            "args": [
+                "-f", "${workspaceFolder}/openocd/stlink_nrf52840.cfg",
+                "-c", "init; nrf52_recover; exit"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "detail": "nrf52_recover: ERASEALL through CTRL-AP (unlocks APPROTECT)"
+        }
+    ]
+}
