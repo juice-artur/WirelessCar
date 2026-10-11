@@ -12,6 +12,7 @@
 #include <zephyr/types.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/gpio.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -93,6 +94,12 @@ UART_ASYNC_ADAPTER_INST_DEFINE(async_adapter);
 #else
 #define async_adapter NULL
 #endif
+
+static const struct gpio_dt_spec boot_trigger = {
+    .port    = DEVICE_DT_GET(DT_NODELABEL(gpio0)),
+    .pin     = 10,
+    .dt_flags = GPIO_ACTIVE_LOW,
+};
 
 static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
 {
@@ -597,6 +604,9 @@ static void configure_gpio(void)
 	if (err) {
 		LOG_ERR("Cannot init LEDs (err: %d)", err);
 	}
+
+	gpio_pin_configure(boot_trigger.port, boot_trigger.pin,
+                   GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW);
 }
 
 int main(void)
@@ -649,7 +659,10 @@ int main(void)
 
 	for (;;) {
 		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
-		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
+		//k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
+		gpio_pin_set_dt(&boot_trigger, (blink_status) % 2);
+		k_sleep(K_MSEC(10000));
+		//gpio_pin_set_dt(&boot_trigger, 0);
 	}
 }
 

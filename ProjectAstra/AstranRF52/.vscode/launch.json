@@ -10,8 +10,8 @@
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "servertype": "openocd",
-            "serverpath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
-            // Absolute path: does not depend on the cwd of the debug adapter.
+            "serverpath": "openocd",
+            // Resolved from PATH (WinGet Links) - survives xPack version bumps.
             "configFiles": [
                 "${workspaceFolder}/openocd/stlink_nrf52840.cfg"
             ],
@@ -49,7 +49,7 @@
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "servertype": "openocd",
-            "serverpath": "C:\\ncs\\toolchains\\4f5b6ad6dd\\opt\\openocd\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            "serverpath": "openocd",
             "configFiles": [
                 "${workspaceFolder}/openocd/stlink_nrf52840.cfg"
             ],

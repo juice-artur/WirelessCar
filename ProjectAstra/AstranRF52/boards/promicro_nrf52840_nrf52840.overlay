@@ -38,3 +38,12 @@
 	pinctrl-1 = <&uart0_nus_sleep>;
 	pinctrl-names = "default", "sleep";
 };
+
+/ {
+    aliases { bootloader-trigger = &trigger0; };
+    trigger0: trigger_0 {
+        compatible = "gpio-leds";
+        gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+        label = "STM32 PC13 button emulation";
+    };
+};
