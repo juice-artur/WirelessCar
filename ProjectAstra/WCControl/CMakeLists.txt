@@ -64,6 +64,8 @@ set_target_properties(appWCControl PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+include("${CMAKE_CURRENT_LIST_DIR}/../Shared/AstraConstants/AstraConstants.cmake")
+
 target_link_libraries(appWCControl
     PRIVATE Qt6::Quick Qt6::Bluetooth
 )
