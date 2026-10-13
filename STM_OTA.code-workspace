@@ -121,6 +121,19 @@
                     "AstraApplication: flash (Release)"
                 ],
                 "problemMatcher": []
+            },
+            {
+                "label": "Detect ST-Link probes",
+                "type": "process",
+                "command": "powershell",
+                "args": [
+                    "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", "${workspaceFolder:AstraApplication}/../../../scripts/detect-stlink.ps1"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder:AstraApplication}/../../.."
+                },
+                "problemMatcher": []
             }
         ]
     },
@@ -166,6 +179,7 @@
                 "serverInterface": "SWD",
                 "serverInterfaceFrequency": "Auto",
                 "serverPort": "61234",
+                "serverSerialNumber": "${input:stmStlinkSerial}",
                 "serverVerify": true,
                 "serverReset": "Connect under reset",
                 "serverRtos": { "enabled": false },
@@ -180,6 +194,18 @@
                         "symbolFileName": "${workspaceFolder:AstraBootloader}/build/Debug/AstraBootloader.elf"
                     }
                 ]
+            }
+        ],
+        "inputs": [
+            {
+                "id": "stmStlinkSerial",
+                "type": "command",
+                "command": "extension.commandvariable.file.content",
+                "args": {
+                    "fileName": "${workspaceFolder:AstraBootloader}/.vscode/stlink.json",
+                    "json": "content.stm || ''",
+                    "default": ""
+                }
             }
         ]
     }

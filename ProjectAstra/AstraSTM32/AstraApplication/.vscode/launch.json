@@ -36,6 +36,7 @@
             "serverInterface": "SWD",
             "serverInterfaceFrequency": "Auto",
             "serverPort": "61234",
+            "serverSerialNumber": "${input:stmStlinkSerial}",
             "serverVerify": true,
             "serverReset": "Software system reset",
             "serverRtos": { "enabled": false },
@@ -47,6 +48,18 @@
                     "symbolFileName": "${workspaceFolder}/build/Debug/AstraApplication.elf"
                 }
             ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "stmStlinkSerial",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+                "fileName": "${workspaceFolder}/.vscode/stlink.json",
+                "json": "content.stm || ''",
+                "default": ""
+            }
         }
     ]
 }
