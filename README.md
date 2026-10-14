@@ -31,6 +31,11 @@ Add `--flash` to actually write it:
 python scripts/astra_ota.py --port COM7 --flash
 ```
 
+Create patched bin
+```powershell
+cmake --build ProjectAstra\AstraSTM32\AstraApplication\build\Debug --target astra_image
+```powershell
+
 The body is sent one Flash page at a time and every page is acknowledged before
 the next one is sent, because the receive buffer on the device is exactly one
 page and is not re-armed until it has been consumed.
