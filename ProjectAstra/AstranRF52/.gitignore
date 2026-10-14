@@ -5,3 +5,4 @@
 # build
 /build*/
 !.vscode
+openocd/stlink_serial.local.cfg

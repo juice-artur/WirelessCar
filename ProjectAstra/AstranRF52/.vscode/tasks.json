@@ -74,6 +74,19 @@
             "problemMatcher": [],
             "group": "build",
             "detail": "nrf52_recover: ERASEALL through CTRL-AP (unlocks APPROTECT)"
+        },
+        {
+            "label": "Detect ST-Link probes",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile", "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}/../../scripts/detect-stlink.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/../.."
+            },
+            "problemMatcher": []
         }
     ]
 }
