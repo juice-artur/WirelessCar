@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Build output
+build/
+out/
+
+# IDE / tooling state
+.settings/
+*.user*
+
+# Qt / WCControl
+importedcontent/
+.qtcreator/
