@@ -77,10 +77,21 @@ Item {
                 required property string address
                 required property int rssi
                 required property bool isNus
+                readonly property bool selected: ListView.isCurrentItem
 
                 width: list.width
                 implicitHeight: 58
                 color: ListView.isCurrentItem ? Theme.surfaceAlt : "transparent"
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 3
+                    height: parent.height - 12
+                    radius: 1.5
+                    color: Theme.accent
+                    visible: delegateItem.selected
+                }
 
                 RowLayout {
                     anchors.fill: parent

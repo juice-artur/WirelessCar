@@ -149,13 +149,8 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 		if (disable_req) {
 			return;
 		}
-
-		if ((evt->data.rx.buf[buf->len - 1] == '\n') ||
-		    (evt->data.rx.buf[buf->len - 1] == '\r')) {
-			disable_req = true;
-			uart_rx_disable(uart);
-		}
-
+		disable_req = true;
+		uart_rx_disable(uart);
 		break;
 
 	case UART_RX_DISABLED:
@@ -611,7 +606,6 @@ static void configure_gpio(void)
 
 int main(void)
 {
-	int blink_status = 0;
 	int err = 0;
 
 	configure_gpio();
@@ -658,11 +652,6 @@ int main(void)
 	advertising_start();
 
 	for (;;) {
-		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
-		//k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
-		gpio_pin_set_dt(&boot_trigger, (blink_status) % 2);
-		k_sleep(K_MSEC(10000));
-		//gpio_pin_set_dt(&boot_trigger, 0);
 	}
 }
 
@@ -670,35 +659,15 @@ void ble_write_thread(void)
 {
 	/* Don't go any further until BLE is initialized */
 	k_sem_take(&ble_init_ok, K_FOREVER);
-	struct uart_data_t nus_data = {
-		.len = 0,
-	};
 
 	for (;;) {
 		/* Wait indefinitely for data to be sent over bluetooth */
 		struct uart_data_t *buf = k_fifo_get(&fifo_uart_rx_data,
 						     K_FOREVER);
 
-		int plen = MIN(sizeof(nus_data.data) - nus_data.len, buf->len);
-		int loc = 0;
-
-		while (plen > 0) {
-			memcpy(&nus_data.data[nus_data.len], &buf->data[loc], plen);
-			nus_data.len += plen;
-			loc += plen;
-
-			if (nus_data.len >= sizeof(nus_data.data) ||
-			   (nus_data.data[nus_data.len - 1] == '\n') ||
-			   (nus_data.data[nus_data.len - 1] == '\r')) {
-				if (bt_nus_send(NULL, nus_data.data, nus_data.len)) {
-					LOG_WRN("Failed to send data over BLE connection");
-				}
-				nus_data.len = 0;
-			}
-
-			plen = MIN(sizeof(nus_data.data), buf->len - loc);
+		while (bt_nus_send(NULL, buf->data, buf->len)) {
+			k_sleep(K_MSEC(10));
 		}
-
 		k_free(buf);
 	}
 }
