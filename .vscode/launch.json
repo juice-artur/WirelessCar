@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Simultaneous debug of Bootloader + Application in a single GDB session.
+            // loadFiles programs both ELFs at the addresses encoded in their linker
+            // scripts (Bootloader -> 0x08000000, App -> 0x08006000 incl. header page).
+            // symbolFiles loads symbols for both images so you can break/step across
+            // the bootloader->application handoff.
+            "name": "Debug Bootloader + App (ST-Link/OpenOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "servertype": "openocd",
+            // OpenOCD is resolved via the machine-local 'cortex-debug.openocdPath'
+            // user setting, falling back to PATH. Never hardcode a machine path here.
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32g4x.cfg"
+            ],
+            "device": "STM32G431CB",
+            // Primary executable: reset starts in the bootloader, so it must be the
+            // image GDB considers "current" (used for runToEntryPoint / disassembly).
+            "executable": "${workspaceFolder}/AstraStm32/AstraBootloader/build/Debug/AstraBootloader.elf",
+            // Program both images, each at its own linked address.
+            "loadFiles": [
+                "${workspaceFolder}/AstraStm32/AstraBootloader/build/Debug/AstraBootloader.elf",
+                "${workspaceFolder}/AstraStm32/AstraApplication/build/Debug/AstraApplication.elf"
+            ],
+            // Provide symbols for both images at once.
+            "symbolFiles": [
+                "${workspaceFolder}/AstraStm32/AstraBootloader/build/Debug/AstraBootloader.elf",
+                "${workspaceFolder}/AstraStm32/AstraApplication/build/Debug/AstraApplication.elf"
+            ],
+            "runToEntryPoint": "main",
+            "preLaunchTask": "Build All (Bootloader + App)",
+            "showDevDebugOutput": "none"
+        }
+    ]
+}

@@ -1,0 +1,72 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure Bootloader",
+            "type": "shell",
+            "command": "cmake --preset Debug",
+            "options": {
+                "cwd": "${workspaceFolder}/AstraStm32/AstraBootloader"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Compile Bootloader",
+            "type": "shell",
+            "command": "cmake --build --preset Debug",
+            "options": {
+                "cwd": "${workspaceFolder}/AstraStm32/AstraBootloader"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Bootloader",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Configure Bootloader",
+                "Compile Bootloader"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Configure Application",
+            "type": "shell",
+            "command": "cmake --preset Debug",
+            "options": {
+                "cwd": "${workspaceFolder}/AstraStm32/AstraApplication"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Compile Application",
+            "type": "shell",
+            "command": "cmake --build --preset Debug",
+            "options": {
+                "cwd": "${workspaceFolder}/AstraStm32/AstraApplication"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Application",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Configure Application",
+                "Compile Application"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build All (Bootloader + App)",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Build Bootloader",
+                "Build Application"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -24,7 +24,9 @@ obj/
 *.jlink
 *.log
 
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 *.user
 
