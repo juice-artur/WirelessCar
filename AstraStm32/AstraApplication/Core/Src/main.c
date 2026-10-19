@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "FlashLayout.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -74,7 +74,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  SCB->VTOR = APP_START_ADDR;
+	__enable_irq();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -91,6 +92,11 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Infinite loop */
+  for (uint32_t blink = 0U; blink < 4U; blink++)
+	{
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
+		HAL_Delay(500);
+	}
   /* USER CODE BEGIN WHILE */
   while (1)
   {

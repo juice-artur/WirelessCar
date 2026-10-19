@@ -18,10 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32g4xx_hal.h"
+#include "stm32g4xx_hal_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "BootloaderJump.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,6 +93,16 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  for (uint32_t blink = 0U; blink <= 3U; blink++) 
+  {
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+      HAL_Delay(1000);
+  }
+
+  if (IsApplicationValid() == APPLICATION_VALID)
+  {
+    JumpToApplication();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */

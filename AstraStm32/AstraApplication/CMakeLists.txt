@@ -34,6 +34,15 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/../Common/FlashLayout.cmake")
+astra_configure_flash_layout(
+    TARGET ${CMAKE_PROJECT_NAME}
+    IMAGE_NAME "Application"
+    IMAGE_REGION "APPLICATION"
+    GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+
+
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -49,12 +58,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    "${ASTRA_GENERATED_DIR}"
 )
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
+    ASTRA_APP_VERSION=${ASTRA_APP_VERSION}
 )
 
 # Remove wrong libob.a library dependency when using cpp files

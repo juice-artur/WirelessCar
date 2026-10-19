@@ -34,6 +34,14 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/../Common/FlashLayout.cmake")
+astra_configure_flash_layout(
+    TARGET ${CMAKE_PROJECT_NAME}
+    IMAGE_NAME "Bootloader"
+    IMAGE_REGION "BOOTLOADER"
+    GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -44,12 +52,13 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+   "${CMAKE_CURRENT_SOURCE_DIR}/BootloaderCore/Src/BootloaderJump.c"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    "${ASTRA_GENERATED_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/BootloaderCore/Include"   
 )
 
 # Add project symbols (macros)
