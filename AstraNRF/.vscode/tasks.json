@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Resolved by the nRF Connect for VS Code extension, which injects the NCS
+            // environment (west, ZEPHYR_BASE, toolchain) into the task. No machine paths here.
+            "label": "nRF Connect: Build",
+            "type": "nrf-connect-build",
+            // Must be set: without it the extension opens an interactive picker and
+            // preLaunchTask would hang waiting for input.
+            "config": "${activeConfig}",
+            // false = incremental build; true = "Build [pristine]" (full rebuild every time)
+            "runCmake": false,
+            "clean": false,
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

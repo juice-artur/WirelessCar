@@ -1,0 +1,51 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Full cycle: build -> program over SWD -> stop at main.
+            // cortex-debug's launch does this automatically (genDownloadCommands
+            // emits "load" + "monitor reset halt"), no extra flags needed.
+            "name": "Flash and debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            // Sysbuild: app image lives in build/<image>/zephyr/zephyr.elf
+            "executable": "${workspaceFolder}/build/AstraNRF/zephyr/zephyr.elf",
+            "device": "nRF52840_xxAA",
+            "configFiles": [
+                "interface/stlink.cfg",
+                // xpack OpenOCD 0.12+ moved Nordic targets: target/nrf52.cfg no longer exists
+                "target/nordic/nrf52.cfg"
+            ],
+            "interface": "swd",
+            // Zephyr SDK ships arm-zephyr-eabi-gdb, not arm-none-eabi-gdb (on PATH).
+            // cortex-debug builds the name as "<prefix>-gdb", so NO trailing dash —
+            // a dash here would look for arm-zephyr-eabi--gdb.exe and fail.
+            "toolchainPrefix": "arm-zephyr-eabi",
+            "runToEntryPoint": "main",
+            "preLaunchTask": "nRF Connect: Build"
+        },
+        {
+            // Attach only: no build and no programming — the firmware already on the
+            // chip keeps running as-is. cortex-debug's attach is just "monitor halt"
+            // (no reset, no load; runToEntryPoint is ignored for attach), so the
+            // session opens paused at the current PC: press Continue (F5) to resume.
+            // Symbols come from the ELF, so they only line up if that ELF is what
+            // is currently flashed — use "Flash and debug" once after a rebuild.
+            "name": "Debug (no flash)",
+            "type": "cortex-debug",
+            "request": "attach",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/AstraNRF/zephyr/zephyr.elf",
+            "device": "nRF52840_xxAA",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/nordic/nrf52.cfg"
+            ],
+            "interface": "swd",
+            "toolchainPrefix": "arm-zephyr-eabi"
+        }
+    ]
+}
