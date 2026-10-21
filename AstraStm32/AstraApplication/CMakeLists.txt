@@ -35,6 +35,8 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../Common/FlashLayout.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/Image/AstraImage.cmake")
+
 astra_configure_flash_layout(
     TARGET ${CMAKE_PROJECT_NAME}
     IMAGE_NAME "Application"
@@ -72,6 +74,5 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
-
-    # Add user defined libraries
+    AstraImage
 )

@@ -5,9 +5,17 @@
 #include "stm32g4xx.h"
 #include "stm32g4xx_hal.h"
 #include "FlashLayout.h"
+#include "AppHeader.h"
 
 ApplicationStatus_t IsApplicationValid(void)
 {
+	AppHeader_t const *const header = (AppHeader_t const *)APP_HEADER_ADDR;
+
+	if (header->magic != ASTRA_MAGIC_VALUE)
+	{
+		return APPLICATION_ERR_MAGIC;
+	}
+
 	uint32_t const stack = *(volatile uint32_t const *)APP_VECTOR_TABLE_ADDR;
 	uint32_t const reset =
 	 *(volatile uint32_t const *)(APP_VECTOR_TABLE_ADDR + 4U);
