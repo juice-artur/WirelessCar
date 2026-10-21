@@ -36,6 +36,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../Common/FlashLayout.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/Image/AstraImage.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/AstraFlash/AstraFlash.cmake")
 
 astra_configure_flash_layout(
     TARGET ${CMAKE_PROJECT_NAME}
@@ -75,4 +76,5 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     AstraImage
+    AstraFlash
 )

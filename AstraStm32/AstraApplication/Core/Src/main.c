@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "FlashLayout.h"
 #include "AppHeader.h"
+#include "AstraFlash.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,6 +39,24 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+uint32_t flash_buffer[PAGE_SIZE_WORDS];
+
+void EnableOtaRequest(void)
+{
+    HAL_FLASH_Unlock();
+
+    FlashReadPage(APP_HEADER_ADDR, flash_buffer);
+
+    ((AppHeader_t *)flash_buffer)->otaRequest = OTA_REQUESTED; 
+
+    FlashErasePage(APP_HEADER_ADDR);
+
+    FlashWritePage(APP_HEADER_ADDR, flash_buffer);
+
+    HAL_FLASH_Lock();
+
+    NVIC_SystemReset();
+}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -89,15 +108,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  for (uint32_t blink = 0U; blink < 4U; blink++)
-	{
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
-		HAL_Delay(500);
-	}
   /* USER CODE BEGIN WHILE */
   while (1)
   {
@@ -177,7 +190,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB9 */
@@ -188,12 +201,23 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
+  __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_13);
   /* USER CODE END MX_GPIO_Init_2 */
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    uint32_t wait = 10000;
+    while (wait--);
 
+    EnableOtaRequest();
+}
 /* USER CODE END 4 */
 
 /**

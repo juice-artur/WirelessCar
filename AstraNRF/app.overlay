@@ -1,3 +1,7 @@
+&i2c1 {
+	status = "disabled";
+};
+
 &pinctrl {
     uart0_default_alt: uart0_default_alt {
         group1 {
@@ -21,4 +25,18 @@
     pinctrl-0 = <&uart0_default_alt>;
     pinctrl-1 = <&uart0_sleep_alt>;
     pinctrl-names = "default", "sleep";
+};
+
+/ {
+    aliases {
+        trigger-stm32-bootloader = &stm32_ctrl_pin;
+    };
+
+    stm32_control {
+        compatible = "gpio-leds";
+        stm32_ctrl_pin: stm32_ctrl_pin {
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            label = "Control pin to STM32";
+        };
+    };
 };
