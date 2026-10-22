@@ -108,6 +108,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
+  for (uint32_t blink = 0U; blink <= 3U; blink++) 
+  {
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
+      HAL_Delay(500);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */

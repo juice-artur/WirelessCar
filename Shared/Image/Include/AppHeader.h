@@ -17,6 +17,7 @@ typedef struct
 	uint32_t magic;
 	uint32_t size;
 	uint32_t crc;
+	/* Encoded as major * 10000 + minor * 100 + patch (see AstraImage.cmake). */
 	uint32_t version;
 	uint32_t otaRequest;
 } AppHeader_t;

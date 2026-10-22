@@ -34,6 +34,15 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+# Version of this application, stored in the .header page of the image.
+#
+# Semantic version "major.minor.patch".  It is encoded into a single 32-bit
+# number by Shared/Image/AstraImage.cmake before it reaches the compiler.
+#
+# Override for a one-off build:
+#   cmake --preset Debug -DASTRA_APP_VERSION=1.2.3
+set(ASTRA_APP_VERSION "1.0.0" CACHE STRING "Application version (major.minor.patch)")
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/../Common/FlashLayout.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/Image/AstraImage.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Shared/AstraFlash/AstraFlash.cmake")
@@ -66,7 +75,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    ASTRA_APP_VERSION=${ASTRA_APP_VERSION}
+    # Add user defined symbols
+    # ASTRA_APP_VERSION is deliberately NOT set here: it is consumed by the
+    # AstraImage library, which compiles AppHeader.c.
 )
 
 # Remove wrong libob.a library dependency when using cpp files
