@@ -6,6 +6,7 @@
 #include "stm32g4xx_hal.h"
 #include "FlashLayout.h"
 #include "AppHeader.h"
+#include "AstraCrc.h"
 
 ApplicationStatus_t IsApplicationValid(void)
 {
@@ -14,6 +15,22 @@ ApplicationStatus_t IsApplicationValid(void)
 	if (header->magic != ASTRA_MAGIC_VALUE)
 	{
 		return APPLICATION_ERR_MAGIC;
+	}
+
+	/* An image programmed directly by a debug adapter has size == 0: its CRC
+	 * cannot be known at link time, so only magic/vector table are trusted. */
+	if (header->size != 0U)
+	{
+		if (header->size > APP_MAX_CODE_SIZE)
+		{
+			return APPLICATION_ERR_SIZE;
+		}
+
+		if (AstraCrc32((void const *)APP_START_ADDR, header->size) !=
+		    header->crc)
+		{
+			return APPLICATION_ERR_CRC;
+		}
 	}
 
 	uint32_t const stack = *(volatile uint32_t const *)APP_VECTOR_TABLE_ADDR;

@@ -44,11 +44,13 @@ HAL_StatusTypeDef FlashWritePageWords(uint32_t pageAddress,
 
 	HAL_FLASH_Unlock();
 
-	/* This part programs a double word at a time, so an odd count leaves the
-     * last word of the pair unread. */
+	/* This part programs a double word at a time.  An odd word count is
+	 * padded with 0xFFFFFFFF, which leaves those Flash bytes erased. */
 	for (uint32_t i = 0; i < wordCount; i += 2)
 	{
-		uint64_t doubleWord = (uint64_t)words[i] | ((uint64_t)words[i + 1] << 32);
+		uint32_t const high =
+		 (i + 1u < wordCount) ? words[i + 1u] : 0xFFFFFFFFu;
+		uint64_t doubleWord = (uint64_t)words[i] | ((uint64_t)high << 32);
 
 		status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,
 		                           pageAddress + (i * 4), doubleWord);
@@ -68,4 +70,38 @@ HAL_StatusTypeDef FlashWritePage(uint32_t pageAddress,
                                  const uint32_t *flashBuffer)
 {
 	return FlashWritePageWords(pageAddress, flashBuffer, PAGE_SIZE_WORDS);
+}
+
+HAL_StatusTypeDef FlashWriteDoubleWords(uint32_t address, const void *data,
+                                        uint32_t length)
+{
+	uint8_t const *bytes = (uint8_t const *)data;
+	HAL_StatusTypeDef status = HAL_OK;
+
+	if (data == NULL || (length % 8u) != 0u || (address % 8u) != 0u)
+	{
+		return HAL_ERROR;
+	}
+
+	HAL_FLASH_Unlock();
+
+	for (uint32_t i = 0; i < length; i += 8u)
+	{
+		uint64_t const doubleWord =
+		 (uint64_t)bytes[i + 0u] | ((uint64_t)bytes[i + 1u] << 8) |
+		 ((uint64_t)bytes[i + 2u] << 16) | ((uint64_t)bytes[i + 3u] << 24) |
+		 ((uint64_t)bytes[i + 4u] << 32) | ((uint64_t)bytes[i + 5u] << 40) |
+		 ((uint64_t)bytes[i + 6u] << 48) | ((uint64_t)bytes[i + 7u] << 56);
+
+		status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address + i,
+		                           doubleWord);
+		if (status != HAL_OK)
+		{
+			break;
+		}
+	}
+
+	HAL_FLASH_Lock();
+
+	return status;
 }

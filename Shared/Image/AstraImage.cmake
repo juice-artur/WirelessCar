@@ -41,9 +41,13 @@ if(ASTRA_APP_VERSION_VALUE GREATER 4294967295)
             "AstraImage: ASTRA_APP_VERSION does not fit into a 32-bit field, got '${ASTRA_APP_VERSION}'")
 endif()
 
-add_library(AstraImage STATIC "${CMAKE_CURRENT_LIST_DIR}/Src/AppHeader.c")
-target_sources(AstraImage PRIVATE 
+add_library(AstraImage STATIC
+        "${CMAKE_CURRENT_LIST_DIR}/Src/AppHeader.c"
+        "${CMAKE_CURRENT_LIST_DIR}/Src/AstraCrc.c"
+)
+target_sources(AstraImage PRIVATE
         "${CMAKE_CURRENT_LIST_DIR}/Include/AppHeader.h"
+        "${CMAKE_CURRENT_LIST_DIR}/Include/AstraCrc.h"
 )
 
 target_include_directories(AstraImage PUBLIC 

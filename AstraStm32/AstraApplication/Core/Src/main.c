@@ -21,6 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
+
 #include "FlashLayout.h"
 #include "AppHeader.h"
 #include "AstraFlash.h"
@@ -41,22 +43,6 @@
 
 uint32_t flash_buffer[PAGE_SIZE_WORDS];
 
-void EnableOtaRequest(void)
-{
-    HAL_FLASH_Unlock();
-
-    FlashReadPage(APP_HEADER_ADDR, flash_buffer);
-
-    ((AppHeader_t *)flash_buffer)->otaRequest = OTA_REQUESTED; 
-
-    FlashErasePage(APP_HEADER_ADDR);
-
-    FlashWritePage(APP_HEADER_ADDR, flash_buffer);
-
-    HAL_FLASH_Lock();
-
-    NVIC_SystemReset();
-}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,7 +60,24 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static volatile bool s_otaRequested = false;
 
+void EnableOtaRequest(void)
+{
+    HAL_FLASH_Unlock();
+
+    FlashReadPage(APP_HEADER_ADDR, flash_buffer);
+
+    ((AppHeader_t *)flash_buffer)->otaRequest = OTA_REQUESTED; 
+
+    FlashErasePage(APP_HEADER_ADDR);
+
+    FlashWritePage(APP_HEADER_ADDR, flash_buffer);
+
+    HAL_FLASH_Lock();
+
+    NVIC_SystemReset();
+}
 /* USER CODE END 0 */
 
 /**
@@ -108,7 +111,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-  for (uint32_t blink = 0U; blink <= 3U; blink++) 
+  for (uint32_t blink = 0U; blink <= 3u; blink++) 
   {
       HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
       HAL_Delay(500);
@@ -122,6 +125,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if (s_otaRequested)
+    {
+        s_otaRequested = false;
+        EnableOtaRequest();
+    }
   }
   /* USER CODE END 3 */
 }
@@ -218,10 +226,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    uint32_t wait = 10000;
-    while (wait--);
-
-    EnableOtaRequest();
+    if (GPIO_Pin == GPIO_PIN_13)
+    {
+        /* Flash operations are too slow for an interrupt context. */
+        s_otaRequested = true;
+    }
 }
 /* USER CODE END 4 */
 

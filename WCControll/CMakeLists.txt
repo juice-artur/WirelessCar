@@ -4,7 +4,7 @@ project(WCControll VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Bluetooth)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -21,6 +21,10 @@ qt_add_qml_module(appWCControll
     URI WCControll
     QML_FILES
         Main.qml
+    SOURCES
+        OtaController.cpp
+        OtaController.h
+        AstraCrc.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -36,6 +40,7 @@ set_target_properties(appWCControll PROPERTIES
 
 target_link_libraries(appWCControll
     PRIVATE Qt6::Quick
+    PRIVATE Qt6::Bluetooth
 )
 
 install(TARGETS appWCControll
