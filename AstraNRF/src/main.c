@@ -32,17 +32,18 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/sys/ring_buffer.h>
+#include <zephyr/bluetooth/services/nus.h>
 
 #include <errno.h>
 
 #define ASTRA_NUS_SERVICE_UUID_VAL \
-    BT_UUID_128_ENCODE(0x6e400001, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+    BT_UUID_NUS_SRV_VAL
 
 #define ASTRA_NUS_RX_UUID_VAL \
-    BT_UUID_128_ENCODE(0x6e400002, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+    BT_UUID_NUS_RX_CHAR_VAL 
 
 #define ASTRA_NUS_TX_UUID_VAL \
-    BT_UUID_128_ENCODE(0x6e400003, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+   	BT_UUID_NUS_TX_CHAR_VAL
 
 /* Astra custom characteristic UUIDs. */
 #define ASTRA_CTRL_UUID_VAL \
