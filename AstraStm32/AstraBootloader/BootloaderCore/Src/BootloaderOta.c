@@ -71,15 +71,9 @@ void BootloaderOta_OnRxCplt(UART_HandleTypeDef *uart)
 		s_ringHead = next;
 	}
 
-	/* Latched "at least one byte arrived" indicator; cheap enough to keep in
-	 * the ISR and the only RX evidence the board can show. */
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
 
 #if ASTRA_OTA_LINK_DEBUG
-	/* Raw echo: whatever the bridge sends comes straight back, so a manual
-	 * frame in nRF Connect proves RX, TX, both wires and the baud rate.
-	 * Written straight into the data register to keep the ISR short; the
-	 * gState check keeps out of the way of an INFO frame in flight. */
 	if (s_echoRaw && uart->gState == HAL_UART_STATE_READY)
 	{
 		while ((uart->Instance->ISR & USART_ISR_TXE_TXFNF) == 0u)
@@ -99,9 +93,6 @@ void BootloaderOta_OnError(UART_HandleTypeDef *uart)
 		return;
 	}
 
-	/* HAL aborts interrupt-driven reception on framing, noise and overrun
-	 * errors.  Without re-arming here the bootloader goes deaf for good,
-	 * which looks exactly like a dead link. */
 	uart->ErrorCode = HAL_UART_ERROR_NONE;
 	(void)HAL_UART_Receive_IT(uart, &s_rxByte, 1u);
 }
@@ -112,8 +103,6 @@ void BootloaderOta_PrimeRx(UART_HandleTypeDef *uart)
 	s_ringHead = 0u;
 	s_ringTail = 0u;
 
-	/* Reading ISR and then RDR clears ORE/NE/FE/PE.  Left set, the very first
-	 * interrupt after arming would be an error and stop reception. */
 	(void)uart->Instance->ISR;
 	(void)uart->Instance->RDR;
 	uart->ErrorCode = HAL_UART_ERROR_NONE;
@@ -133,9 +122,6 @@ bool BootloaderOta_SniffRxLine(void)
 	gpio.Pull = GPIO_PULLDOWN;
 	HAL_GPIO_Init(GPIOA, &gpio);
 
-	/* A UART transmitter idles high, so a wired bridge holds the pin up even
-	 * against the internal pull-down.  A low level means the wire, the pad or
-	 * the bridge TX is not driving. */
 	for (uint32_t sample = 0u; sample < 50u; sample++)
 	{
 		HAL_Delay(1u);
@@ -303,8 +289,6 @@ static AstraOtaResult otaBegin(AstraOtaBegin const *begin)
 		}
 	}
 
-	/* Keep otaRequest set while the slot is incomplete: a power loss must
-	 * bring the bootloader back into OTA instead of a half-erased app. */
 	buildHeader(0u, 0u, begin->version, OTA_REQUESTED);
 	if (FlashWritePage(APP_HEADER_ADDR, s_headerPage) != HAL_OK)
 	{
@@ -467,14 +451,10 @@ static void handleFrame(uint8_t type, uint8_t const *payload, uint16_t length)
 	}
 }
 
-/* Liveness and, during bring-up, link diagnostics.  The heartbeat is always
- * driven because the blink is the only sign of life the board can give. */
 static void indicationService(void)
 {
 	uint32_t const now = HAL_GetTick();
 
-	/* Liveness: the loop must keep toggling PB7 even while it waits for data.
-	 * A frozen heartbeat means the CPU hung (for example inside the UART ISR). */
 	if ((int32_t)(now - s_nextHeartMs) >= 0)
 	{
 		s_nextHeartMs = now + OTA_HEARTBEAT_MS;
@@ -482,8 +462,6 @@ static void indicationService(void)
 	}
 
 #if ASTRA_OTA_LINK_DEBUG
-	/* Unsolicited INFO: proves STM32 -> nRF -> BLE -> Qt.  Stopped as soon as
-	 * a transfer begins so it cannot disturb the stop-and-wait ACK flow. */
 	if (s_began || (int32_t)(now - s_nextInfoMs) < 0)
 	{
 		return;
@@ -503,8 +481,6 @@ void BootloaderOta_Run(UART_HandleTypeDef *uart)
 {
 	static uint8_t payload[ASTRA_OTA_MAX_PAYLOAD];
 
-	/* Reception is normally armed right after the UART is initialised; arm it
-	 * here when that did not happen. */
 	if (s_uart != uart)
 	{
 		BootloaderOta_PrimeRx(uart);
@@ -530,9 +506,6 @@ void BootloaderOta_Run(UART_HandleTypeDef *uart)
 		uint8_t type = 0u;
 		uint16_t length = 0u;
 
-		/* The timeout only bounds the wait for a start byte; the rest of the
-		 * frame uses OTA_BYTE_TIMEOUT_MS per byte.  Keeping it short means the
-		 * heartbeat keeps blinking while the line is idle. */
 		uint32_t const timeout = listening ? 100u : OTA_HEARTBEAT_POLL;
 
 		if (!readFrame(&type, payload, sizeof(payload), &length, timeout))

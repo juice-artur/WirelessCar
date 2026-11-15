@@ -1,27 +1,3 @@
-/*
- * nRF52840 BLE <-> UART bridge for the Astra OTA.
- *
- * The GATT service exposes Nordic-UART-like characteristics (so it can be
- * tested with nRF Connect), one control characteristic that pulses the STM32
- * OTA request pin, and one read-only diagnostics block:
- *
- *   6e400001-...  service
- *   6e400002-...  RX, write     -> forwarded to UART
- *   6e400003-...  TX, notify    <- everything received from UART
- *   6e400004-...  control, write 0x01 -> trigger the STM32 bootloader
- *   6e400005-...  diagnostics, read-only counter block
- *
- * Both directions are byte streams; the frame protocol itself is handled by
- * the Qt host and the STM32 bootloader.
- *
- * The UART uses the asynchronous API: reception is a long EasyDMA transfer
- * over two alternating buffers, so nothing is lost while the CPU services the
- * radio.  The interrupt-driven API reads a single byte per interrupt and the
- * nRF UARTE receiver stays stopped between the ENDRX event and the STARTRX
- * restart; at 115200 with BLE active that restart is late often enough to
- * swallow most of a frame, and an overrun there stops the receiver for good.
- */
-
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -87,11 +63,6 @@ K_SEM_DEFINE(tx_request_sem, 0, 1);
 K_SEM_DEFINE(tx_done_sem, 0, 1);
 K_SEM_DEFINE(rx_wake_sem, 0, 1);
 
-/*
- * Diagnostics counters, readable over BLE as a little-endian struct.  They are
- * updated from the UART callback (interrupt context) and read from the BLE
- * host thread; a torn snapshot is harmless for bring-up.
- */
 struct bridge_stats {
 	uint32_t uart_rx_bytes;
 	uint32_t uart_rx_events;
