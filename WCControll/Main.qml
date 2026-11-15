@@ -1,90 +1,183 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
 
 ApplicationWindow {
     id: window
-    width: 640
-    height: 480
-    minimumWidth: 200
-    minimumHeight: 250
+    width: 780
+    height: 720
+    minimumWidth: 560
+    minimumHeight: 520
     visible: true
-    title: qsTr("Hello World")
-    property bool lightMode: Application.styleHints.colorScheme === Qt.Light
-    property color reallyDark: "#1f1f1f"
-    property color dark: "#262626"
-    property color reallyLight: "#e7e7e7"
-    property color light: "#e0e0e0"
+    title: qsTr("Astra BLE OTA")
 
-    GridLayout {
-        id: grid
-        columns: width < 400 ? 1 : 2
-        rowSpacing: 0
-        columnSpacing: 0
+    OtaController {
+        id: ota
+    }
+
+    FileDialog {
+        id: imageDialog
+        title: qsTr("Select an Astra .ota image")
+        nameFilters: [
+            qsTr("Astra OTA image (*.ota)"),
+            qsTr("All files (*)")
+        ]
+        onAccepted: ota.loadImage(selectedFile)
+    }
+
+    ColumnLayout {
         anchors.fill: parent
+        anchors.margins: 12
+        spacing: 10
 
-        Rectangle {
-            id: rectangle1
-            color: window.lightMode ? window.reallyLight : window.reallyDark
-            Layout.fillHeight: true
+        RowLayout {
             Layout.fillWidth: true
 
-            ColumnLayout {
-                anchors.fill: parent
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+            Label {
+                text: qsTr("BLE devices")
+                font.bold: true
+                font.pixelSize: 16
+            }
 
-                Label {
-                    id: text1
-                    color: window.lightMode ? window.dark : window.light
-                    font.pixelSize: 120
-                    fontSizeMode: Text.Fit
-                    text: qsTr("Hello World")
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.margins: 16
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: ota.connected ? qsTr("Connected") : qsTr("Disconnected")
+                color: ota.connected ? "#2e7d32" : "#9e9e9e"
+            }
+
+            Button {
+                text: ota.scanning ? qsTr("Scanning...") : qsTr("Scan")
+                enabled: !ota.scanning && !ota.busy && !ota.connected
+                onClicked: ota.startScan()
             }
         }
 
-        Rectangle {
-            id: rectangle2
-            color: window.lightMode ? window.light : window.dark
-            Layout.fillHeight: true
+        Frame {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 150
+            padding: 1
+
+            ListView {
+                id: deviceList
+                anchors.fill: parent
+                clip: true
+                model: ota.devices
+
+                delegate: ItemDelegate {
+                    width: ListView.view.width
+                    enabled: !ota.busy && !ota.connected
+
+                    contentItem: RowLayout {
+                        Label {
+                            text: modelData.name
+                            font.bold: true
+                        }
+                        Label {
+                            text: modelData.address
+                            color: palette.mid
+                        }
+                        Item { Layout.fillWidth: true }
+                        Label {
+                            text: modelData.rssi + qsTr(" dBm")
+                            color: palette.mid
+                        }
+                    }
+
+                    onClicked: ota.connectDevice(modelData.address)
+                }
+            }
+
+            Label {
+                anchors.centerIn: parent
+                visible: ota.devices.length === 0
+                text: ota.scanning ? qsTr("Scanning...")
+                                   : qsTr("No devices yet - press Scan.")
+                color: palette.mid
+            }
+        }
+
+        RowLayout {
             Layout.fillWidth: true
 
-            ColumnLayout {
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideMiddle
+                text: ota.imageInfo.length > 0
+                      ? ota.imageInfo
+                      : qsTr("No .ota image loaded")
+                color: ota.imageInfo.length > 0 ? palette.text : palette.mid
+            }
+
+            Button {
+                text: qsTr("Select .ota...")
+                enabled: !ota.busy
+                onClicked: imageDialog.open()
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Button {
+                text: ota.busy ? qsTr("Updating...") : qsTr("Start OTA update")
+                highlighted: true
+                enabled: ota.connected && ota.imageInfo.length > 0 && !ota.busy
+                onClicked: ota.startUpdate()
+            }
+
+            Button {
+                text: qsTr("Disconnect")
+                enabled: ota.connected && !ota.busy
+                onClicked: ota.disconnectDevice()
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: qsTr("%1 %").arg(Math.round(ota.progress * 100))
+                color: palette.mid
+            }
+        }
+
+        ProgressBar {
+            Layout.fillWidth: true
+            from: 0
+            to: 1
+            value: ota.progress
+        }
+
+        Frame {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            padding: 1
+
+            ScrollView {
+                id: logScroll
                 anchors.fill: parent
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                clip: true
 
-                Button {
-                    id: button1
-                    text: window.lightMode ? qsTr("\u263D  Dark mode")
-                                           : qsTr("\u263C  Light mode")
-                    Layout.bottomMargin: 16
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                TextArea {
+                    id: logArea
+                    width: logScroll.availableWidth
+                    readOnly: true
+                    wrapMode: TextArea.Wrap
+                    font.family: "Consolas"
+                    font.pixelSize: 12
+                    text: ota.statusText
 
-                    contentItem: Text {
-                        text: button1.text
-                        color: window.lightMode ? window.light : window.dark
-                        font: button1.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    onTextChanged: {
+                        if (logScroll.contentItem) {
+                            logScroll.contentItem.contentY =
+                                Math.max(0, logScroll.contentItem.contentHeight
+                                            - logScroll.height)
+                        }
                     }
-
-                    background: Rectangle {
-                        implicitWidth: 120
-                        implicitHeight: 36
-                        radius: 8
-                        color: window.lightMode ? window.dark : window.light
-                    }
-
-                    onClicked: window.lightMode = !window.lightMode
                 }
             }
         }
     }
-
 }

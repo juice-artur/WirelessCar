@@ -96,6 +96,94 @@ What this gives you:
 
 Note: both images share the same RAM and define identically named functions (`main`, HAL, etc.). For ambiguous names, GDB picks the first loaded image; `file:line` breakpoints work correctly because the source paths differ.
 
+## BLE OTA update
+
+The update chain is:
+
+```
+Qt app (Windows) --BLE--> nRF52840 --UART--> STM32 bootloader --> application Flash
+```
+
+- `AstraNRF` bridges BLE to UART. It exposes a Nordic-UART-like GATT service
+  (`6e400001-…`) with RX/TX characteristics plus a control characteristic
+  (`6e400004-…`). Writing `0x01` to the control characteristic pulses `P1.06`,
+  which is wired to the STM32 `PC13` EXTI pin. The nRF itself does not parse
+  the protocol — it is a transparent byte pipe.
+- The STM32 application handles the pulse in its main loop (not in the
+  interrupt handler): it sets `otaRequest` in the application header and
+  resets.
+- The bootloader speaks the framed protocol on `USART1` (115200 8N1,
+  `PA9`/`PA10`).
+
+### Wiring
+
+| nRF52840 | STM32G431 | Purpose |
+| -------- | --------- | ------- |
+| `P0.08` (UART0 TX) | `PA10` (USART1 RX) | frames to the bootloader |
+| `P0.06` (UART0 RX) | `PA9` (USART1 TX) | replies from the bootloader |
+| `P1.06` | `PC13` | OTA request pulse |
+| `GND` | `GND` | common ground |
+
+### Build the images
+
+Building `AstraApplication` runs `scripts/astra_image.py` after linking and
+produces, next to `AstraApplication.elf`:
+
+- `AstraApplication.bin` — complete Flash image (header page + code), used with
+  ST-Link or a `.bin` programmer;
+- `AstraApplication.ota` — 16-byte manifest + code, consumed by the Qt app.
+
+The Qt host lives in `WCControll`. It needs Qt 6 with the **Bluetooth** module
+(the `msvc2022_64` kit is used below):
+
+```powershell
+# from a "Developer PowerShell for VS 2022"
+cmake -S WCControll -B build/qt -G Ninja -DCMAKE_PREFIX_PATH=D:\Qt\6.12.0\msvc2022_64
+cmake --build build/qt
+D:\Qt\6.12.0\msvc2022_64\bin\windeployqt.exe --qmldir WCControll build\qt\appWCControll.exe
+```
+
+`windeployqt` is only needed when the executable is copied to another machine;
+running it from the build directory uses the Qt installation directly.
+
+### Update procedure
+
+1. Flash the bootloader (`0x08000000`) and the `AstraNRF` firmware (nRF Connect
+   SDK 3.4.1 / Zephyr 4.4).
+2. Program `AstraApplication.bin` with ST-Link for the first installation.
+3. Power the board, start `appWCControll`, press **Scan** and connect to
+   `AstraCar`.
+4. Select `AstraApplication.ota` and press **Start OTA update**.
+5. The app pulses the request line, waits for the bootloader's start-up blink,
+   sends `BEGIN`, then 2 KB `DATA` blocks with stop-and-wait ACKs, and `END`.
+   The bootloader verifies the CRC32 over the whole slot, writes the final
+   header and resets into the new application.
+
+If the transfer is interrupted, the intermediate header keeps `otaRequest`
+set, so the next reset returns to the bootloader and the update can simply be
+retried.
+
+### Protocol
+
+```
+frame: 0xA5 | type u8 | length u16 LE | payload | crc16 u16 LE
+crc16: CRC-16/CCITT-FALSE over type + length + payload
+```
+
+| Type | Name | Payload |
+| ---- | ---- | ------- |
+| `0x02` / `0x82` | `GET_INFO` / `INFO` | `version`, `maxCodeSize`, `state` |
+| `0x10` | `BEGIN` | `codeSize`, `crc32`, `version` |
+| `0x11` | `DATA` | `offset`, up to 2048 bytes |
+| `0x12` | `END` | — |
+| `0x13` | `ABORT` | — |
+| `0x90` / `0x91` / `0x92` | `ACK` / `STATUS` / `DONE` | `nextOffset` / `code` / `code` |
+
+`.ota` files start with a 16-byte manifest — `"AOTA"`, `version`, `codeSize`,
+`crc32` (all `u32` little-endian) — followed by the code padded with `0xFF` to
+a multiple of 8 bytes. The CRC32 is IEEE 802.3, identical to
+`zlib.crc32()`.
+
 ## Portability
 
 - The repository contains no absolute paths — only `${workspaceFolder}` and tool names from `PATH`.

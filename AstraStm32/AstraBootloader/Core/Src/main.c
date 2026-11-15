@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "BootloaderJump.h"
+#include "BootloaderOta.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,7 +84,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  /* Link diagnostic: sample USART1 RX before the UART claims the pin. */
+  bool const rxLineHigh = BootloaderOta_SniffRxLine();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -91,10 +93,33 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Start listening immediately: the handover from the application may already
+   * have pushed bytes into the receiver, and an unread byte plus overrun would
+   * turn the first interrupt into an error that stops reception. */
+  BootloaderOta_PrimeRx(&huart1);
+
+  /* Link diagnostic: 3 fast blinks = USART1 RX idles high, so the bridge is
+   * wired and driving; 1 fast blink = the line is low (wire, pad or bridge TX).
+   * Then the four one-second blinks mark "bootloader is entering OTA mode". */
+  for (uint32_t i = 0U; i < (rxLineHigh ? 3U : 1U); i++)
+  {
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+      HAL_Delay(150);
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+      HAL_Delay(250);
+  }
+
   for (uint32_t blink = 0U; blink <= 3U; blink++) 
   {
       HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
       HAL_Delay(1000);
+  }
+
+  if (IsApplicationValid() != APPLICATION_VALID || BootloaderOta_IsRequested())
+  {
+    /* Returns only when the listen window expires and the application is
+     * valid.  After a successful update this resets the MCU. */
+    BootloaderOta_Run(&huart1);
   }
 
   if (IsApplicationValid() == APPLICATION_VALID)
@@ -237,12 +262,33 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
+  /* Link diagnostic: PB9 latches on when the first byte arrives from the
+   * bridge, so RX activity is visible without any PC-side tooling. */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1)
+    {
+        BootloaderOta_OnRxCplt(huart);
+    }
+}
 
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1)
+    {
+        BootloaderOta_OnError(huart);
+    }
+}
 /* USER CODE END 4 */
 
 /**

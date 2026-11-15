@@ -58,6 +58,22 @@ astra_configure_flash_layout(
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
+# Pack the application into a flash image and an OTA payload after linking.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/astra_image.py"
+            --objcopy "${CMAKE_OBJCOPY}"
+            --elf "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+            --output-dir "${CMAKE_CURRENT_BINARY_DIR}"
+            --header-addr ${APP_HEADER_ADDR}
+            --app-start ${APP_START_ADDR}
+            --max-code-size ${APP_MAX_CODE_SIZE}
+            --name "AstraApplication"
+    COMMENT "Packing AstraApplication.bin / AstraApplication.ota"
+    VERBATIM)
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
