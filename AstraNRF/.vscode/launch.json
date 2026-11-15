@@ -16,9 +16,7 @@
             ],
             "interface": "swd",
             "toolchainPrefix": "arm-zephyr-eabi",
-            "armToolchainPath": "C:/ncs/toolchains/4f5b6ad6dd/opt/zephyr-sdk/gnu/arm-zephyr-eabi/bin",
-            "gdbPath": "C:/ncs/toolchains/4f5b6ad6dd/opt/zephyr-sdk/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb.exe",
-            "serverpath": "C:/Users/Juice/AppData/Local/Microsoft/WinGet/Packages/xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe/xpack-openocd-0.12.0-7/bin/openocd.exe",
+            "gdbPath": "arm-zephyr-eabi-gdb",
             "runToEntryPoint": "main",
             "preLaunchTask": "nRF Connect: Build"
         },
@@ -36,8 +34,7 @@
             ],
             "interface": "swd",
             "toolchainPrefix": "arm-zephyr-eabi",
-            "armToolchainPath": "C:/ncs/toolchains/4f5b6ad6dd/opt/zephyr-sdk/gnu/arm-zephyr-eabi/bin",
-            "gdbPath": "C:/ncs/toolchains/4f5b6ad6dd/opt/zephyr-sdk/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb.exe"
+            "gdbPath": "arm-zephyr-eabi-gdb",
         }
     ]
 }
