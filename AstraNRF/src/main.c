@@ -35,32 +35,41 @@
 
 #include <errno.h>
 
-#define NUS_SVC_UUID_VAL                                                       \
-	BT_UUID_128_ENCODE(0x6e400001, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
-#define NUS_RX_UUID_VAL                                                        \
-	BT_UUID_128_ENCODE(0x6e400002, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
-#define NUS_TX_UUID_VAL                                                        \
-	BT_UUID_128_ENCODE(0x6e400003, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
-#define NUS_CTRL_UUID_VAL                                                      \
-	BT_UUID_128_ENCODE(0x6e400004, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
-#define NUS_DBG_UUID_VAL                                                       \
-	BT_UUID_128_ENCODE(0x6e400005, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+#define ASTRA_NUS_SERVICE_UUID_VAL \
+    BT_UUID_128_ENCODE(0x6e400001, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
 
-/* Reception is double buffered: while EasyDMA fills one buffer the other one
- * is free for the driver to be handed over on UART_RX_BUF_REQUEST. */
-#define RX_BUF_LEN 512u
+#define ASTRA_NUS_RX_UUID_VAL \
+    BT_UUID_128_ENCODE(0x6e400002, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
 
-/* Report partially filled buffers after this much line idle time.  The nRF52
- * driver turns this into a periodic timer of timeout/5, so it must not be too
- * small; 5 ms is invisible next to the 1000 ms per-byte budget of the STM32
- * frame reader. */
-#define RX_TIMEOUT_US 5000u
+#define ASTRA_NUS_TX_UUID_VAL \
+    BT_UUID_128_ENCODE(0x6e400003, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
 
-static struct bt_uuid_128 nus_svc_uuid = BT_UUID_INIT_128(NUS_SVC_UUID_VAL);
-static struct bt_uuid_128 nus_rx_uuid = BT_UUID_INIT_128(NUS_RX_UUID_VAL);
-static struct bt_uuid_128 nus_tx_uuid = BT_UUID_INIT_128(NUS_TX_UUID_VAL);
-static struct bt_uuid_128 nus_ctrl_uuid = BT_UUID_INIT_128(NUS_CTRL_UUID_VAL);
-static struct bt_uuid_128 nus_dbg_uuid = BT_UUID_INIT_128(NUS_DBG_UUID_VAL);
+/* Astra custom characteristic UUIDs. */
+#define ASTRA_CTRL_UUID_VAL \
+    BT_UUID_128_ENCODE(0x6e400004, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+
+#define ASTRA_DBG_UUID_VAL \
+    BT_UUID_128_ENCODE(0x6e400005, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
+
+/* BLE UUID definitions. */
+static const struct bt_uuid_128 nus_service_uuid =
+    BT_UUID_INIT_128(ASTRA_NUS_SERVICE_UUID_VAL);
+
+static const struct bt_uuid_128 nus_rx_uuid =
+    BT_UUID_INIT_128(ASTRA_NUS_RX_UUID_VAL);
+
+static const struct bt_uuid_128 nus_tx_uuid =
+    BT_UUID_INIT_128(ASTRA_NUS_TX_UUID_VAL);
+
+static const struct bt_uuid_128 astra_ctrl_uuid =
+    BT_UUID_INIT_128(ASTRA_CTRL_UUID_VAL);
+
+static const struct bt_uuid_128 astra_dbg_uuid =
+    BT_UUID_INIT_128(ASTRA_DBG_UUID_VAL);
+
+/* UART RX configuration. */
+#define ASTRA_UART_RX_BUFFER_SIZE  512U
+#define ASTRA_UART_RX_TIMEOUT_US   5000U
 
 static struct bt_conn *current_conn;
 static bool notify_enabled;
@@ -105,7 +114,7 @@ struct bridge_stats {
 };
 
 static struct bridge_stats stats;
-static uint8_t rx_buf[2][RX_BUF_LEN];
+static uint8_t rx_buf[2][ASTRA_UART_RX_BUFFER_SIZE];
 static uint8_t rx_buf_active;
 static atomic_t rx_restart_pending;
 
@@ -181,17 +190,17 @@ static void on_ccc_changed(const struct bt_gatt_attr *attr, uint16_t value)
  *        [5] CCC, [6] control decl, [7] control value, [8] diag decl,
  *        [9] diag value. */
 BT_GATT_SERVICE_DEFINE(nus_service,
-	BT_GATT_PRIMARY_SERVICE(&nus_svc_uuid),
+	BT_GATT_PRIMARY_SERVICE(&nus_service_uuid),
 	BT_GATT_CHARACTERISTIC(&nus_rx_uuid.uuid,
 		BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
 		BT_GATT_PERM_WRITE, NULL, on_rx_write, NULL),
 	BT_GATT_CHARACTERISTIC(&nus_tx_uuid.uuid,
 		BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_NONE, NULL, NULL, NULL),
 	BT_GATT_CCC(on_ccc_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
-	BT_GATT_CHARACTERISTIC(&nus_ctrl_uuid.uuid,
+	BT_GATT_CHARACTERISTIC(&astra_ctrl_uuid.uuid,
 		BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
 		BT_GATT_PERM_WRITE, NULL, on_ctrl_write, NULL),
-	BT_GATT_CHARACTERISTIC(&nus_dbg_uuid.uuid,
+	BT_GATT_CHARACTERISTIC(&astra_dbg_uuid.uuid,
 		BT_GATT_CHRC_READ, BT_GATT_PERM_READ, on_stats_read, NULL, NULL),
 );
 
@@ -202,7 +211,7 @@ static const struct bt_data ad[] = {
 };
 
 static const struct bt_data sd[] = {
-	BT_DATA_BYTES(BT_DATA_UUID128_ALL, NUS_SVC_UUID_VAL),
+	BT_DATA_BYTES(BT_DATA_UUID128_ALL, ASTRA_NUS_SERVICE_UUID_VAL),
 };
 
 static void adv_start_work_handler(struct k_work *work);
@@ -432,7 +441,7 @@ static void rx_thread(void *a, void *b, void *c)
 			rx_buf_active = 0u;
 
 			if (uart_rx_enable(uart, rx_buf[0], sizeof(rx_buf[0]),
-			                   RX_TIMEOUT_US) == 0) {
+			                   ASTRA_UART_RX_TIMEOUT_US) == 0) {
 				stats.rx_restarts++;
 			} else {
 				stats.rx_restart_fail++;
@@ -484,7 +493,7 @@ int main(void)
 
 	uart_callback_set(uart, uart_cb, NULL);
 
-	if (uart_rx_enable(uart, rx_buf[0], sizeof(rx_buf[0]), RX_TIMEOUT_US) != 0) {
+	if (uart_rx_enable(uart, rx_buf[0], sizeof(rx_buf[0]), ASTRA_UART_RX_TIMEOUT_US) != 0) {
 		return 0;
 	}
 
